@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Users, Airplay } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;

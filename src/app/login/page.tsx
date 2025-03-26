@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Plane, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/app/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,8 +38,10 @@ export default function LoginPage() {
 
       router.push('/');
       router.refresh();
+      toast.success('Login successful');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
+      toast.error('Login failed');
     } finally {
       setLoading(false);
     }

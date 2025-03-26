@@ -16,7 +16,7 @@ export type Database = {
           email: string;
           phone: string;
           birthday: string;
-          service_type: 'Paid' | 'Free';
+          client_group_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -27,11 +27,16 @@ export type Database = {
         Row: {
           id: string;
           client_id: string;
+          airline: string;
+          departure: string;
+          destination: string;
           flight_date: string;
+          flight_time: string;
+          ticket_number: string;
           cost_type: 'Paid' | 'Free';
           charged_amount: number;
           currency: '₪' | '$';
-          amount_due: number;
+          ticket_price: number;
           payment_status: 'Paid' | 'Unpaid';
           flight_status: 'Upcoming' | 'Completed' | 'Canceled';
           created_at: string;

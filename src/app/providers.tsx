@@ -5,9 +5,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Menu, X, Plane, Home, Users, Airplay } from 'lucide-react';
-import { AuthContext } from './contexts/AuthContext';
-import { NavLink } from './components/Navigation/NavLink';
-import { MobileMenu } from './components/Navigation/MobileMenu';
+import { AuthContext } from '../contexts/AuthContext';
+import { NavLink } from '../components/Navigation/NavLink';
+import { MobileMenu } from '../components/Navigation/MobileMenu';
+import { toast, Toaster } from 'sonner';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: Home },
@@ -40,6 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     router.replace('/login');
+    toast.success('Signed out successfully');
   };
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -91,7 +93,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           />
         </nav>
       )}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 min-h-screen relative">
+      <Toaster />
+      <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 relative ${!showNav ? 'min-h-screen' : ''}`}>
         {children}
       </main>
     </AuthContext.Provider>
