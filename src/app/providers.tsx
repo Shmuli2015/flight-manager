@@ -1,112 +1,99 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { User } from '@supabase/supabase-js';
+import { Menu, X, Plane, Home, Users, Airplay } from 'lucide-react';
+import { AuthContext } from './contexts/AuthContext';
+import { NavLink } from './components/Navigation/NavLink';
+import { MobileMenu } from './components/Navigation/MobileMenu';
 
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  signOut: async () => {},
-});
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
+const navItems = [
+  { path: '/', label: 'Dashboard', icon: Home },
+  { path: '/clients', label: 'Clients', icon: Users },
+  { path: '/flights', label: 'Flights', icon: Airplay }
+];
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    router.replace('/login');
   };
 
-  // Don't show navigation on login page
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+
   const showNav = !pathname.startsWith('/login');
+  const isActive = (path: string) => {
+    if (path === '/' && pathname === '/') return true;
+    if (path !== '/' && pathname.startsWith(path)) return true;
+    return false;
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
       {showNav && (
         <nav className="bg-white shadow">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
-                  <span className="text-xl font-bold text-indigo-600">Flight Manager</span>
-                </div>
-                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  <a
-                    href="/"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      pathname === '/'
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
-                  >
-                    Dashboard
-                  </a>
-                  <a
-                    href="/clients"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      pathname.startsWith('/clients')
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
-                  >
-                    Clients
-                  </a>
-                  <a
-                    href="/flights"
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      pathname.startsWith('/flights')
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
-                  >
-                    Flights
-                  </a>
-                </div>
+            <div className="flex justify-between h-16 items-center">
+              <div className="flex items-center space-x-2 cursor-pointer" onClick={() => router.push('/')}>
+                <Plane className="h-6 w-6 text-indigo-600" />
+                <span className="text-xl font-bold text-indigo-600">Flight Manager</span>
+              </div>
+              <div className="hidden md:flex space-x-8">
+                {navItems.map((item) => (
+                  <NavLink key={item.path} {...item} isActive={isActive(item.path)} />
+                ))}
               </div>
               <div className="flex items-center">
                 <button
                   onClick={signOut}
-                  className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="hidden md:block px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 cursor-pointer"
                 >
                   Sign out
+                </button>
+                <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
+                  {menuOpen ? (
+                    <X className="h-6 w-6 text-indigo-600 cursor-pointer" />
+                  ) : (
+                    <Menu className="h-6 w-6 text-indigo-600 cursor-pointer" />
+                  )}
                 </button>
               </div>
             </div>
           </div>
+          <MobileMenu
+            isOpen={menuOpen}
+            navItems={navItems}
+            isActive={isActive}
+            onSignOut={signOut}
+          />
         </nav>
       )}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 min-h-screen relative">
+        {children}
+      </main>
     </AuthContext.Provider>
   );
-} 
+}
