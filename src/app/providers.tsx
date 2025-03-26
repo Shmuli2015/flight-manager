@@ -56,7 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
       {showNav && (
-        <nav className="bg-white shadow">
+        <nav className="bg-white shadow sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
               <div className="flex items-center space-x-2 cursor-pointer" onClick={() => router.push('/')}>
